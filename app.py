@@ -6,6 +6,11 @@ import time
 
 app = Flask(__name__)
 
+if app.config['ENV'] == "development":
+  baseUrl = 'http://api.hypechat:3000'
+elif app.config['ENV'] == "production":
+  baseUrl = 'https://hypechat-production.herokuapp.com/'
+
 @app.route('/ping')
 def ping_pong():
   return 'pong'
@@ -14,7 +19,7 @@ def auth_expired(res):
   return res.status_code == 401 and res.json()['status'] == 'error' and res.json()['type'] == 'unauthorized'
 
 def login():
-  loginUrl = 'http://api.hypechat:3000/login'
+  loginUrl = baseUrl + '/login'
 
   loginCredentials = {
     'email': 'titobot@hypechat.com',
@@ -25,7 +30,7 @@ def login():
   return r.json()['accessToken']
 
 authToken = login()
-url = 'http://api.hypechat:3000/workspaces/1/messages'
+url = baseUrl + '/workspaces/1/messages'
 silencedUntil = None
 
 def help_message(received):
