@@ -9,7 +9,7 @@ app = Flask(__name__)
 if app.config['ENV'] == "development":
   baseUrl = 'http://api.hypechat:3000'
 elif app.config['ENV'] == "production":
-  baseUrl = 'https://hypechat-production.herokuapp.com/'
+  baseUrl = 'https://hypechat-production.herokuapp.com'
 
 @app.route('/ping')
 def ping_pong():
@@ -65,12 +65,12 @@ def mute_message(received):
 def getAnswer(received):
 
   received['message_tokens'] = received['message'].split()
-  if len(received['message_tokens']) == 0 :
+  if received['message_tokens'][0] != '@Tito' or len(received['message_tokens']) == 1:
     return default_message(received)
   return {
     'help': help_message,
     'mute': mute_message,
-  }.get(received['message_tokens'][0].lower(), default_message)(received)
+  }.get(received['message_tokens'][1].lower(), default_message)(received)
 
 def send_response(message):
   headers = {
@@ -92,7 +92,11 @@ def tito_help():
 
   # If bot is silenced, return.
   if silencedUntil and silencedUntil > time.time():
-    return "200"
+    return '200'
+
+  # if mentioned by ifself, Tito won't answer.
+  if request.json['from']['firstName'] == 'Tito':
+    return '200'
 
   time.sleep(1)
 
@@ -103,4 +107,4 @@ def tito_help():
     authToken = login()
     send_response(anwser)
 
-  return "200"
+  return '200'
