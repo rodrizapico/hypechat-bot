@@ -30,7 +30,6 @@ def login():
   return r.json()['accessToken']
 
 authToken = login()
-url = baseUrl + '/workspaces/1/messages'
 silencedUntil = None
 
 def help_message(received):
@@ -72,17 +71,18 @@ def getAnswer(received):
     'mute': mute_message,
   }.get(received['message_tokens'][1].lower(), default_message)(received)
 
-def send_response(message):
+def send_response(message, workspaceId, groupId):
   headers = {
     'X-Auth': authToken
   }
 
   payload = {
     'recipientId': None,
-    'groupId': 1,
+    'groupId': groupId,
     'message': message
   }
 
+  url = baseUrl + '/workspaces/' + workspaceId + '/messages'
   return requests.post(url, headers = headers, json = payload)
 
 @app.route('/tito', methods=['POST'])
@@ -101,7 +101,7 @@ def tito_help():
   time.sleep(1)
 
   anwser = getAnswer(request.json)
-  r = send_response(anwser)
+  r = send_response(anwser, request.json['workspaceId'], request.json['groupId'])
 
   if auth_expired(r):
     authToken = login()
