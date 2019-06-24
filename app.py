@@ -32,6 +32,9 @@ def login():
 authToken = login()
 silencedUntil = None
 
+def default_message(received):
+  return ('No comprendí el comando. Envía @tito help para ver los comandos a los que puedo responder.')
+
 def help_message(received):
   return ('Comandos: \n'
           '@Tito help - muestra este mensaje de ayuda.\n'
@@ -39,8 +42,8 @@ def help_message(received):
           '@Tito mute <n> - desactiva mis respuestas por n segundos. Ejemplo: "@Tito mute 30" (máximo 300 segundos).\n'
           '@Tito me - muestra información sobre el usuario que envía el mensaje.')
 
-def default_message(received):
-  return ('No comprendí el comando. Envía @tito help para ver los comandos a los que puedo responder.')
+def info_message(received):
+  return 'Este comando no se encuentra implementado todavía.'
 
 def mute_message(received):
   global silencedUntil
@@ -61,14 +64,18 @@ def mute_message(received):
   silencedUntil = time.time() + silencedTime
   return message
 
-def getAnswer(received):
+def me_message(received):
+  return 'Este comando no se encuentra implementado todavía.'
 
+def getAnswer(received):
   received['message_tokens'] = received['message'].split()
   if received['message_tokens'][0] != '@Tito' or len(received['message_tokens']) == 1:
     return default_message(received)
   return {
     'help': help_message,
+    'info': info_message,
     'mute': mute_message,
+    'me': me_message
   }.get(received['message_tokens'][1].lower(), default_message)(received)
 
 def send_response(message, workspaceId, groupId):
