@@ -17,7 +17,7 @@ def login():
   loginUrl = 'http://api.hypechat:3000/login'
 
   loginCredentials = {
-    'email': 'tito.bot@gmail.com',
+    'email': 'titobot@hypechat.com',
     'password': 'titosPassword123!'
   }
 
@@ -30,10 +30,10 @@ silencedUntil = None
 
 def help_message(received):
   return ('Comandos: \n'
-          '@tito help - muestra este mensaje de ayuda.\n'
-          '@tito info - muestra información del canal: integrantes, cantidad de mensajes, etc.\n'
-          '@tito mute <n> - desactiva mis respuestas por n segundos. Ejemplo: "@tito mute 30" (máximo 300 segundos).\n'
-          '@tito me - muestra información sobre el usuario que envía el mensaje.')
+          '@Tito help - muestra este mensaje de ayuda.\n'
+          '@Tito info - muestra información del grupo: integrantes, cantidad de mensajes, etc.\n'
+          '@Tito mute <n> - desactiva mis respuestas por n segundos. Ejemplo: "@Tito mute 30" (máximo 300 segundos).\n'
+          '@Tito me - muestra información sobre el usuario que envía el mensaje.')
 
 def default_message(received):
   return ('No comprendí el comando. Envía @tito help para ver los comandos a los que puedo responder.')
@@ -60,6 +60,8 @@ def mute_message(received):
 def getAnswer(received):
 
   received['message_tokens'] = received['message'].split()
+  if len(received['message_tokens']) == 0 :
+    return default_message(received)
   return {
     'help': help_message,
     'mute': mute_message,
