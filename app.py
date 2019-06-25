@@ -159,6 +159,8 @@ def tito():
     authToken = login()
     send_response(anwser)
 
+  return '200'
+
 @app.route('/tito/newmember', methods=['POST'])
 def tito_greet():
   global authToken
