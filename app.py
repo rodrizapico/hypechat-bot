@@ -1,6 +1,8 @@
 from flask import Flask
 from flask import request
 from flask import json
+from functools import reduce
+
 import requests
 import time
 
@@ -19,14 +21,14 @@ def auth_expired(res):
   return res.status_code == 401 and res.json()['status'] == 'error' and res.json()['type'] == 'unauthorized'
 
 def login():
-  loginUrl = baseUrl + '/login'
+  url = baseUrl + '/login'
 
   loginCredentials = {
     'email': 'titobot@hypechat.com',
     'password': 'titosPassword123!'
   }
 
-  r = requests.post(loginUrl, json = loginCredentials)
+  r = requests.post(url, json = loginCredentials)
   return r.json()['accessToken']
 
 authToken = login()
@@ -65,7 +67,16 @@ def mute_message(received):
   return message
 
 def me_message(received):
-  return 'Este comando no se encuentra implementado todavía.'
+  url = baseUrl + '/users/' + str(received['from']['id']) + '/profile'
+  r = requests.get(url)
+  userData = r.json()
+
+  userWorkspaces = list(map(lambda workspace: workspace['name'], userData['workspaces']))
+  userWorkspaces = reduce(lambda a, b: a + '\n' + b, userWorkspaces)
+
+  return ('Nombre completo: ' + userData['firstName'] + ' ' + userData['lastName'] + '\n'
+          'Fecha de registro: ' + userData['regristationDate'] + '\n'
+          'Workspaces a los que perteneces: \n' + str(userWorkspaces) )
 
 def getAnswer(received):
   received['message_tokens'] = received['message'].split()
