@@ -35,7 +35,7 @@ authToken = login()
 silencedUntil = None
 
 def default_message(received):
-  return ('No comprendí el comando. Envía @tito help para ver los comandos a los que puedo responder.')
+  return ('No comprendí el comando. Envía @Tito help para ver los comandos a los que puedo responder.')
 
 def help_message(received):
   return ('Comandos: \n'
@@ -45,7 +45,41 @@ def help_message(received):
           '@Tito me - muestra información sobre el usuario que envía el mensaje.')
 
 def info_message(received):
-  return 'Este comando no se encuentra implementado todavía.'
+  headers = {
+    'X-Auth': authToken
+  }
+
+  url = baseUrl + '/workspaces/' + str(received['workspaceId']) + '/groups/' + str(received['groupId'])
+  r = requests.get(url, headers = headers)
+  groupData = r.json()
+
+  # url = baseUrl + '/users/' + str(groupData['creatorId']) + '/profile'
+  # r = requests.get(url, headers = headers)
+  # creatorData = r.json()
+
+  visibility = 'Público' if groupData['visibility'] == 'PUBLIC' else 'Privado' 
+
+  def parse_member(member):
+    annotation = (' (BOT)' if member['isBot'] else '')
+    if not annotation:
+      annotation = (' (CREADOR)' if member['id'] == groupData['creatorId'] else '')
+    return member['firstName'] + ' ' + member['lastName'] + annotation
+
+
+  members = list(map(parse_member, groupData['users']))
+
+  print(groupData['users'], flush = True)
+  print(members, flush = True)
+
+  members = reduce(lambda a, b: a + ', ' + b, members)
+
+  print(members, flush = True)
+
+  return ('Nombre del grupo: ' + groupData['name'] + ' (' + visibility + ')\n'
+          'Descripción: ' + groupData['description'] + '\n'
+          'Fecha de creación: ' + groupData['createdAt'] + '\n'
+          'Cantidad de mensajes: ' + str(groupData['totalMessages']) + '\n'
+          'Miembros: ' + str(members) )
 
 def mute_message(received):
   global silencedUntil
@@ -100,11 +134,11 @@ def send_response(message, workspaceId, groupId):
     'message': message
   }
 
-  url = baseUrl + '/workspaces/' + workspaceId + '/messages'
+  url = baseUrl + '/workspaces/' + str(workspaceId) + '/messages'
   return requests.post(url, headers = headers, json = payload)
 
 @app.route('/tito', methods=['POST'])
-def tito_help():
+def tito():
   global authToken
   print("received: " + json.dumps(request.json), flush = True)
 
@@ -112,7 +146,7 @@ def tito_help():
   if silencedUntil and silencedUntil > time.time():
     return '200'
 
-  # if mentioned by ifself, Tito won't answer.
+  # if mentioned by itself, Tito won't answer.
   if request.json['from']['firstName'] == 'Tito':
     return '200'
 
@@ -120,6 +154,32 @@ def tito_help():
 
   anwser = getAnswer(request.json)
   r = send_response(anwser, request.json['workspaceId'], request.json['groupId'])
+
+  if auth_expired(r):
+    authToken = login()
+    send_response(anwser)
+
+@app.route('/tito/newmember', methods=['POST'])
+def tito_greet():
+  global authToken
+  print("received: " + json.dumps(request.json), flush = True)
+
+  # If bot is silenced, return.
+  if silencedUntil and silencedUntil > time.time():
+    return '200'
+
+  # if new member is itself, Tito won't answer.
+  if request.json['member']['firstName'] == 'Tito':
+    return '200'
+
+  time.sleep(1)
+
+  print(request.json['member'], flush = True)
+  answer = ('Bienvenido ' + request.json['member']['firstName'] + '!\n'
+            'Soy un bot, y estoy para ayudarte.\n' 
+            'Envía @Tito help para ver los comandos a los que puedo responder.')
+
+  r = send_response(answer, request.json['workspaceId'], request.json['groupId'])
 
   if auth_expired(r):
     authToken = login()
